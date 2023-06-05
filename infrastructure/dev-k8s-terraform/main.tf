@@ -21,18 +21,35 @@ data "aws_vpc" "name" {
 resource "aws_security_group" "petclinic-mutual-sg" {
   name = var.sec-gr-mutual
   vpc_id = data.aws_vpc.name.id
+
+  ingress {
+    protocol = "tcp"
+    from_port = 10250
+    to_port = 10250
+    self = true
+  }
+
+    ingress {
+    protocol = "udp"
+    from_port = 8472
+    to_port = 8472
+    self = true
+  }
+
+    ingress {
+    protocol = "tcp"
+    from_port = 2379
+    to_port = 2380
+    self = true
+  }
+
 }
 
 resource "aws_security_group" "petclinic-kube-worker-sg" {
   name = var.sec-gr-k8s-worker
   vpc_id = data.aws_vpc.name.id
 
-  ingress {
-    protocol = "tcp"
-    from_port = 10250
-    to_port = 10250
-    security_groups = [aws_security_group.petclinic-mutual-sg.id]
-  }
+
   ingress {
     protocol = "tcp"
     from_port = 30000
@@ -47,13 +64,6 @@ resource "aws_security_group" "petclinic-kube-worker-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    protocol = "udp"
-    from_port = 8472
-    to_port = 8472
-    security_groups = [aws_security_group.petclinic-mutual-sg.id]
-  }
-  
   egress{
     protocol = "-1"
     from_port = 0
@@ -62,7 +72,6 @@ resource "aws_security_group" "petclinic-kube-worker-sg" {
   }
   tags = {
     Name = "kube-worker-secgroup"
-    "kubernetes.io/cluster/petclinicCluster" = "owned"
   }
 }
 
@@ -76,72 +85,42 @@ resource "aws_security_group" "petclinic-kube-master-sg" {
     to_port = 22
     cidr_blocks = ["0.0.0.0/0"]
   }
-  ingress {
-    protocol = "tcp"
-    from_port = 80
-    to_port = 80
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+
   ingress {
     protocol = "tcp"
     from_port = 6443
     to_port = 6443
     cidr_blocks = ["0.0.0.0/0"]
   }
-  ingress {
-    protocol = "tcp"
-    from_port = 443
-    to_port = 443
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    protocol = "tcp"
-    from_port = 2380
-    to_port = 2380
-    security_groups = [aws_security_group.petclinic-mutual-sg.id]
-  }
-  ingress {
-    protocol = "tcp"
-    from_port = 2379
-    to_port = 2379
-    security_groups = [aws_security_group.petclinic-mutual-sg.id]
-  }
-  ingress {
-    protocol = "tcp"
-    from_port = 10250
-    to_port = 10250
-    security_groups = [aws_security_group.petclinic-mutual-sg.id]
-  }
+
   ingress {
     protocol = "tcp"
     from_port = 10257
     to_port = 10257
     self = true
   }
+
   ingress {
     protocol = "tcp"
     from_port = 10259
     to_port = 10259
     self = true
   }
+
   ingress {
     protocol = "tcp"
     from_port = 30000
     to_port = 32767
     cidr_blocks = ["0.0.0.0/0"]
   }
-  ingress {
-    protocol = "udp"
-    from_port = 8472
-    to_port = 8472
-    security_groups = [aws_security_group.petclinic-mutual-sg.id]
-  }
+
   egress {
     protocol = "-1"
     from_port = 0
     to_port = 0
     cidr_blocks = ["0.0.0.0/0"]
   }
+  
   tags = {
     Name = "kube-master-secgroup"
   }
